@@ -7,21 +7,22 @@
 #import "Reachability/Reachability.h"
 
 #import <CoreLocation/CoreLocation.h>
-#import "FLTConnectivityLocationHandler.h"
+// #import "FLTConnectivityLocationHandler.h"
 #import "SystemConfiguration/CaptiveNetwork.h"
 
 #include <ifaddrs.h>
 
 #include <arpa/inet.h>
 
-@interface FLTConnectivityPlugin () <FlutterStreamHandler, CLLocationManagerDelegate>
+@interface FLTConnectivityPlugin () <FlutterStreamHandler>//, CLLocationManagerDelegate>
 
-@property(strong, nonatomic) FLTConnectivityLocationHandler* locationHandler;
+// @property(strong, nonatomic) FLTConnectivityLocationHandler* locationHandler;
 
 @end
 
 @implementation FLTConnectivityPlugin {
   FlutterEventSink _eventSink;
+  Reachability* _reachabilityForInternetConnection;
 }
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
@@ -76,12 +77,16 @@
                                            selector:@selector(onReachabilityDidChange:)
                                                name:kReachabilityChangedNotification
                                              object:nil];
-  [[Reachability reachabilityForInternetConnection] startNotifier];
+  _reachabilityForInternetConnection = [Reachability reachabilityForInternetConnection];
+  [_reachabilityForInternetConnection startNotifier];
   return nil;
 }
 
 - (FlutterError*)onCancelWithArguments:(id)arguments {
-  [[Reachability reachabilityForInternetConnection] stopNotifier];
+  if (_reachabilityForInternetConnection) {
+    [_reachabilityForInternetConnection stopNotifier];
+    _reachabilityForInternetConnection = nil;
+  }
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   _eventSink = nil;
   return nil;
